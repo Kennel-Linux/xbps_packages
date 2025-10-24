@@ -1,0 +1,18 @@
+#!/bin/sh
+# utility by fredx181 Jan2022
+#
+# revison 19Feb2022 by fredx181
+#### Load swap ####
+ echo "LOAD SWAP"
+  for ONESWAP in `fdisk -l | grep ' Linux swap' | cut -f 1 -d ' ' | tr '\n' ' '`
+  do
+    echo -n "Loading swap partition $ONESWAP..." >/dev/console
+    swapon $ONESWAP
+  done
+#########################
+
+#### Create symlink /mnt/home ####
+MNTHOME=$(mount | grep "/mnt/layers/merged/media" |  cut -d'/' -f3 | cut -d' ' -f1)
+cd /mnt/
+ln -sfn /mnt/layers/merged/media/root/$MNTHOME home
+#########################

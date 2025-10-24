@@ -1,2 +1,2 @@
 # xbps_packages
-KLV custom package collection
+Collection of Void Linux style XBPS packages assembled for KLV 
