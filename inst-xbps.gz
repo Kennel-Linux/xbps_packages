@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# 2021-12-27, fredx181, install local xbps package
+# note that this depends on the 'correct' name of the provided xbps package
+# should be: <name>-<version>.<arch>.xbps
+# will fail if not exact
+# 2022-01-02, added yad selection dialog (select xbps) and run install commands in xterm
+
+if [ -z $(which xmessage) ]; then
+MESSAGE=gxmessage
+else
+MESSAGE=xmessage
+fi
+
+# set terminal command, if xterm is installed it will be used
+if [ -z "$(which xterm)" ]; then
+	msg=" You don't have xterm installed.\nIt's a dependency of this program."
+	echo $msg
+	$MESSAGE "`echo -e $msg`"
+exit 0
+else
+_TERMCMD="xterm -rv -geometry 80x15 -title inst-xbps -e"
+fi
+
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+echo -en "\nThis script will install a single xbps package \nUsage:\n`basename ${0}` </path/to/package.xbps>"
+exit 0
+fi
+
+  if [ "$1" = "" ]; then
+XBPS=$(yad --center --window-icon="" --file --filename=$HOME --file-filter='xbps files (.xbps) | *.xbps' --title="Select xpps package" --text="Select a .xbps package" --height=500 --width=600)
+[ $? -ne 0 ] && exit
+export XBPS="$XBPS"
+    if [ ! -f "$XBPS" ]; then
+    yad --center --title="Error" --text="     Package not existing     " --button="Close!gtk-close:0"
+    exit
+    fi
+  else
+XBPS="$1"
+ifxbps=`echo "${XBPS##*.}"`
+if [ "$ifxbps" != "xbps" ]; then
+echo -e "\n$1 is not a xbps,\n please provide a .xbps package\n `basename ${0}` </path/to/package.xbps>\n"
+exit 0
+else
+export XBPS="$(realpath "$XBPS")"
+fi
+  fi
+
+export INDEXDIR="/var/cache/xbps"  # change as preferred
+# export INDEXDIR="$(dirname "$XBPS")"  # same directory as package, uncomment if preferred and comment out above
+
+# run in terminal
+run_in_term () {
+PKG="$(basename "$XBPS")"
+PKG1="${PKG%.*}"
+cp -a "$XBPS" "$INDEXDIR"/ 2> /dev/null # copy to $INDEXDIR
+xbps-rindex -af  "$INDEXDIR/$PKG"  # index the package
+xbps-install -R "$INDEXDIR"/ -f -I "${PKG1%.*}"  -y # install
+[ $? -ne 0 ] && echo "Something went wrong, perhaps you need to update the repository sources?"
+echo
+read -s -n 1 -p "Press any key to close . . ."
+}
+export -f run_in_term
+
+$_TERMCMD "/bin/bash -c 'run_in_term'"
